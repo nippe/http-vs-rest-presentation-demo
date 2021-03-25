@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Just showing stuff
+
+
+Resources:
+
+  # HTTP API using SAM Serverless Transform
+  # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-httpapi.html
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Name: Awesome HTTP API
+    Description: Temp API for configuration service
+    Properties:
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+        AllowOrigins:
+          - '*'
+      Auth:
+        Authorizers:
+          GeneralAuth:
+            AuthorizationScopes:
+              - email
+            IdentitySource: "$request.header.Authorization"
+            JwtConfiguration:
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPoolId}
+              audience:
+                - !Ref Audience
+
+                
+  # REST API using SAM Serverless Transform
+  # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-api.html
+ApiGatewayApi:
+  Type: AWS::Serverless::Api
+  Name: Rest Api name
+  Description: Something telling
+  Properties:
+    StageName: prod
+    Cors: "'*'"
+      Auth:
+        DefaultAuthorizer: MyCognitoAuthorizer
+        Authorizers:
+          MyCognitoAuthorizer:
+            UserPoolArn:
+              Fn::GetAtt: [MyCognitoUserPool, Arn]
